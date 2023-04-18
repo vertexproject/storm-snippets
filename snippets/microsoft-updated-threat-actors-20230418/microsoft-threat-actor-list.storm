@@ -1,0 +1,25 @@
+for ($oldname, $newname, $muddy, $altnames) in $rows {
+
+    gen.risk.threat $oldname microsoft |
+
+    { for $name in $altnames.split(",") { [ :org:names+=$name ] } }
+
+    [ :org:name=$newname :org:names+=$oldname ]
+
+    switch $muddy {
+        "Iran": {[ :org:loc=ir ]}
+        "China": {[ :org:loc=cn ]}
+        "Russia": {[ :org:loc=ru ]}
+        "Turkey": {[ :org:loc=tr ]}
+        "Lebanon": {[ :org:loc=lb ]}
+        "Vietnam": {[ :org:loc=vn ]}
+        "North Korea": {[ :org:loc=kp ]}
+        "South Korea": {[ :org:loc=kr ]}
+        "Group in development": {}
+        "Private Sector Offensive Actor": {}
+        "Financially motivated": {
+            [ :goals+={[ ou:goal=(microsoft, threat, fingain) :name="financial gain" ]} ]
+        }
+        *: { $lib.print(`MISSING HANDLER: {$muddy}`) }
+    }
+}
