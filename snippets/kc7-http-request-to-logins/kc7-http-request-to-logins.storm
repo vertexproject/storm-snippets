@@ -1,0 +1,33 @@
+/*
+Name: kc7-http-request-to-login.storm
+Original Author: charlesprice@microsoft.com
+Modified By: 
+Date: 2023-10-09
+
+Description: Identifies the user (and their associated contact information) that successfully logged on from an external IPv4 address at the time/after an HTTP request was made to a domain of interest.
+
+References: 
+    -- https://kc7cyber.com/
+
+Dependencies:
+    -- KC7 dataset 
+*/
+
+// Initialize list with domains of interest.
+init {  
+  $domains = $lib.list("immune.tech", "technologyimmune.med")  
+} 
+
+// Search for HTTP requests made to a domain of interest, and print the earliest HTTP request to the console.
+inet:fqdn *in= $domains -> inet:url | uniq | -> inet:http:request | min :time | $earliest=:time $lib.print($earliest) | spin 
+
+// Lift the contact information of the user that successfully logged onto a host at the time or after the earliest HTTP request was observed.
+| inet:fqdn *in= $domains 
+  -> inet:url  
+  -> inet:http:request :client:ipv4  
+  -> it:host:ipv4 
+  -> ps:contact 
+  -> inet:user 
+  -> auth:creds 
+  -> it:logon +:success=True +:time >= $earliest -{ :client:ipv4 -> it:host:ipv4 -> ps:contact -> ou:org +:name="Envolve Labs" } 
+  -> auth:creds -> inet:user -> ps:contact 

@@ -1,0 +1,116 @@
+/*
+Name: crowdstrike-falcon-actors.storm
+Original Author: bartosz.roszewski@smartcontract.com
+Modified By: <>
+Date: 2023-10-09
+
+Description: Ingest data returned from Crowdstrike's Falcon Intelligence Actor APIs. A Crowdstrike Power-Up did not exist at the time of this release.
+
+References: 
+    -- API: https://developer.crowdstrike.com/crowdstrike/reference
+    -- Docs: https://developer.crowdstrike.com/crowdstrike/docs
+
+Dependencies:
+    -- Crowdstrike API key
+*/
+
+// Iterate over each yielded result.
+for $actor in $rows {
+    $aliases = $lib.list()
+    $aliases = $actor.known_as.split(",")
+    
+    // CS naming convention is perfect for a proper tag hierarchy with all SPIDERs being part of a larger SPIDER tag tree. 
+    $actor_name = $lib.list()
+    $actor_name = $actor.slug.split("-")
+    $tag = $lib.str.format("rep.crowdstrike.thr.{cat}.{name}", cat=$actor_name.1, name=$actor_name.0)
+    
+    $f_stime = $lib.time.fromunix($actor.first_activity_date)
+    $l_stime = $lib.time.fromunix($actor.last_activity_date)
+    
+    // Handle edge cases where last seen time = 0.
+    if ($l_stime < $f_stime) { $l_stime = $f_stime }
+    
+    // Handle edge cases where motivation is missing.
+    if ($lib.len($actor.motivations) > 0) {
+        $motiv = $actor.motivations.0.slug
+    } else {$motiv = "unclassified"}
+       
+    // Check if objectives/goals exist and append to an array.
+    $goals = $lib.list()
+    if ($lib.len($actor.objectives) > 0) {
+        for $objective in $actor.objectives {
+            $goal = {[ou:goal=("crowdstrike", $objective.slug) :name=$objective.slug]}
+            $goals.append($goal)
+        }
+    }
+
+    // Add capabilities within the a unique CS namespace.
+    $capabilities = $lib.list()
+    if ($lib.len($actor.capabilities) > 0) {
+        for $capa in $actor.capabilities {
+            $capa_type = $lib.str.format("crowdstrike.{capa_name}", capa_name = $capa.slug)
+            $capabilities.append({[ou:technique=("crowdstrike", $capa.slug) :name=$capa.slug :type=$capa_type]})
+        }
+    }
+
+    // Extract industries, but instead of creating unique ones for CS, try looking them up by name first.
+    // Only create new ones if an existing industry cannot be found. Also map some existing Mandiant's industry names to those used by CS (incomplete, will map the rest in the future).
+    $target_industries = $lib.list()
+    if ($lib.len($actor.target_industries) > 0) {
+        for $industry in $actor.target_industries {
+            $industry_name = $industry.value
+            switch $industry.value {
+                "Vocational and Higher-Level Education": {$industry_name = "education - university"}
+                "Local Government": {$industry_name = "government"}
+                "Government": {$industry_name = "government - national"}
+                "Oil and Gas": {$industry_name = "oil & gas"}
+                // TODO: add more mappings with Mandiant
+            }
+
+            // This can (I think) lead to mapping the same TA to 2 different industry nodes with the same name, needs fixing. 
+            $lookup = {ou:industry:name=$industry_name}
+            if ($lookup != $lib.null) {
+                $target_industries.append($lookup)
+            } else {
+                {[ou:industry=("crowdstrike", $industry.slug) :name=$industry_name]}
+            }
+        }
+    }
+
+    // Actor.slug can and perhaps should be replaced with the id field, but I figured I prefer to have 2 nodes if CS decides to change the name of the threat actor - 1 for the old one and 1 for the new one. 
+    [risk:threat=("crowdstrike", $actor.slug)
+        :org:name=$actor.name
+        :reporter:name="crowdstrike"
+        :reporter=de3f395a5879bcdc0ad485fb9f33ad9a  // Hardcoded ou:org GUID for my Synapse instance
+        :desc=$actor.short_description
+        :org:names=$aliases
+        :tag=$tag
+        .seen=($f_stime, $l_stime)
+        :type= {[risk:threat:type:taxonomy=$lib.str.format("motivaton.{motiv}", motiv=$motiv)]}
+    ]
+
+    // Model actor goals. Not sure if this is the most efficent but I prefer this.
+    if ($lib.len($goals) > 0) {
+        [:goals=$goals]
+    }
+
+    // Model actor capabilities.
+    if ($lib.len($capabilities) > 0) {
+        for $capability in $capabilities {
+            [+(uses)> {ou:technique=$capability}]
+        }
+    }
+
+    // Model actor targeted industries.
+    if ($lib.len($target_industries) > 0) {
+        for $industry_node in $target_industries {
+            [+(targets)> {ou:industry=$industry_node}]
+        }
+    }
+
+    // Model actor targeted countries.
+    for $country in $actor.target_countries {
+        [+(targets)> {pol:country:iso2=$country.slug}]
+    }
+   
+}
