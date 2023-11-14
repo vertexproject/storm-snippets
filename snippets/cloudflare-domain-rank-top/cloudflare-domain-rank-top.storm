@@ -16,7 +16,7 @@ Dependencies:
 
 
 // List of top datasets to query.
-$datasets = $lib.list("top_200", "top_500", "top_1000", "top_2000", "top_5000", "top_10000", "top_20000", "top_50000", "top_100000", "top_200000", "top_500000", "top_1000000")
+$datasets = (["top_200", "top_500", "top_1000", "top_2000", "top_5000", "top_10000", "top_20000", "top_50000", "top_100000", "top_200000", "top_500000", "top_1000000"])
 
 // Query Cloudflare Radar for each top dataset. 
 for $dataset in $datasets {
