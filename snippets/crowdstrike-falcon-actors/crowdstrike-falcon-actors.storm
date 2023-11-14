@@ -86,7 +86,7 @@ for $actor in $rows {
         :org:names=$aliases
         :tag=$tag
         .seen=($f_stime, $l_stime)
-        :type= {[risk:threat:type:taxonomy=$lib.str.format("motivaton.{motiv}", motiv=$motiv)]}
+        :type= {[risk:threat:type:taxonomy=`motivaton.{$motiv}`]}
     ]
 
     // Model actor goals. Not sure if this is the most efficent but I prefer this.
