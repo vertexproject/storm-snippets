@@ -20,7 +20,7 @@ $datasets = (["top_200", "top_500", "top_1000", "top_2000", "top_5000", "top_100
 
 // Query Cloudflare Radar for each top dataset. 
 for $dataset in $datasets {
-    $url = $lib.str.concat("https://api.cloudflare.com/client/v4/radar/datasets/ranking_", $dataset)
+    $url = `https://api.cloudflare.com/client/v4/radar/datasets/ranking_{$dataset}`
     $headers = $lib.dict(
         "Accept"="application/json",
         "Authorization"= `Bearer {$lib.globals.get(cloudflare:apikey)}` //added Bearer
