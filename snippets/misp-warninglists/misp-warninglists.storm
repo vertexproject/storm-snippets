@@ -22,6 +22,7 @@ function createNodes(content, name){
         else {
             for $form in ('inet:ipv4', 'inet:ipv6'){
                 [ *$form?=$ioc +#warninglist.$name ]
+                if $node { break }
             }
         }
     }
