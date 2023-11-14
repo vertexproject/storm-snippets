@@ -109,8 +109,6 @@ for $actor in $rows {
     }
 
     // Model actor targeted countries.
-    for $country in $actor.target_countries {
-        [+(targets)> {pol:country:iso2=$country.slug}]
-    }
+    [+(targets)> { for $country in $actor.target_countries { pol:country:iso2=$country.slug } } ]
    
 }
