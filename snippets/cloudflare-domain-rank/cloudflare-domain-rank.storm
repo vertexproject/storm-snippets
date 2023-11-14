@@ -19,10 +19,10 @@ Dependencies:
 
 // Query Cloudflare's Radar's Domains Rank details for the inbound domain.
 $url = `https://api.cloudflare.com/client/v4/radar/ranking/domain/{$node.repr()}`
-$headers = $lib.dict(
-    "Accept"="application/json",
-    "Authorization"= `Bearer {$lib.globals.get(cloudflare:apikey)}` 
-)
+$headers = ({
+    "Accept": "application/json",
+    "Authorization": `Bearer {$lib.globals.get(cloudflare:apikey)}` 
+})
 $resp = $lib.inet.http.get($url, $headers)
 
 // For each successful response ...
