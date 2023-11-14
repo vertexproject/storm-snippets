@@ -36,7 +36,7 @@ $resp = $lib.inet.http.get($url_all)
 
 // Check for an unsuccessful HTTP response code
 if ($resp.code != 200) {
-    $lib.warn("Returned HTTP code: {code}", code=$resp.code)
+    $lib.warn(`Returned HTTP code: {$resp.code} {$resp.reason}`)
     return($lib.null)
 }
 
