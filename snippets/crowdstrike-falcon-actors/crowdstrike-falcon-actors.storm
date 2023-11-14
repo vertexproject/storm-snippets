@@ -96,9 +96,8 @@ for $actor in $rows {
 
     // Model actor capabilities.
     if ($lib.len($capabilities) > 0) {
-        for $capability in $capabilities {
-            [+(uses)> {ou:technique=$capability}]
-        }
+        [+(uses)> { for $capability in $capabilities { ou:technique=$capability } } ] 
+
     }
 
     // Model actor targeted industries.
