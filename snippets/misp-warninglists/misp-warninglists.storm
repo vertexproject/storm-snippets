@@ -58,7 +58,7 @@ else{
 
         // Create nodes for warning list indicators.
         else{
-            $content = ($resp.json())
+            $content = $resp.json()
             $type = $content.type
             $forms = ()
             $name = $lib.regex.replace('\.', '_', $warninglist.name)
