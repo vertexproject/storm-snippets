@@ -18,7 +18,7 @@ Dependencies:
 +inet:fqdn
 
 // Query Cloudflare's Radar's Domains Rank details for the inbound domain.
-$url = $lib.str.concat("https://api.cloudflare.com/client/v4/radar/ranking/domain/", $node.repr())
+$url = `https://api.cloudflare.com/client/v4/radar/ranking/domain/{$node.repr()}`
 $headers = $lib.dict(
     "Accept"="application/json",
     "Authorization"= `Bearer {$lib.globals.get(cloudflare:apikey)}` 
