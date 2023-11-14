@@ -48,7 +48,7 @@ for $actor in $rows {
     $capabilities = $lib.list()
     if ($lib.len($actor.capabilities) > 0) {
         for $capa in $actor.capabilities {
-            $capa_type = $lib.str.format("crowdstrike.{capa_name}", capa_name = $capa.slug)
+            $capa_type = `crowdstrike.{$capa.slug}`
             $capabilities.append({[ou:technique=("crowdstrike", $capa.slug) :name=$capa.slug :type=$capa_type]})
         }
     }
