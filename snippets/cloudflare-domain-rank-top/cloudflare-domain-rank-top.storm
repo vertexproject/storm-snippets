@@ -48,6 +48,6 @@ for $dataset in $datasets {
     
     // Print HTTP warning messages to the console.
     else {   
-        $lib.warn("Download for dataset \"{dataset}\" returned HTTP code: {code}", dataset=$dataset, code=$resp.code)
+        $lib.warn(`Download for dataset "{$dataset}" returned HTTP code: {$resp.code} {$resp.reason}`)
     }
 }
