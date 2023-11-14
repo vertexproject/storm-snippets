@@ -16,6 +16,7 @@ function createNodes(content, name){
         if ($ioc ~= '/'){
             for $form in ('inet:cidr4', 'inet:cidr6'){
                 [ *$form?=$ioc +#warninglist.$name ]
+                if $node { break }
             }
         }
         else {
