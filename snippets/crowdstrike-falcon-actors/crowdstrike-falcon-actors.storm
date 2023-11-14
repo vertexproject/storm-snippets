@@ -103,9 +103,7 @@ for $actor in $rows {
 
     // Model actor targeted industries.
     if ($lib.len($target_industries) > 0) {
-        for $industry_node in $target_industries {
-            [+(targets)> {ou:industry=$industry_node}]
-        }
+        [+(targets)> { for $industry_node in $target_industries { ou:industry=$industry_node } } ]
     }
 
     // Model actor targeted countries.
