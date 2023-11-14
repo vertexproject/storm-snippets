@@ -55,5 +55,5 @@ if ($resp.code = 200) {
 
 // Print HTTP warning messages to the console.
 else {
-    $lib.warn("Query returned HTTP code: {code}", code=$resp.code)
+    $lib.warn(`Query returned HTTP code: {$resp.code} {$resp.reason}`)
 }
