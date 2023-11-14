@@ -15,7 +15,7 @@ Dependencies:
 
 // Initialize list with domains of interest.
 init {  
-  $domains = $lib.list("immune.tech", "technologyimmune.med")  
+  $domains = (["immune.tech", "technologyimmune.med"])  
 } 
 
 // Search for HTTP requests made to a domain of interest, and print the earliest HTTP request to the console.
