@@ -16,11 +16,13 @@ function createNodes(content, name){
         if ($ioc ~= '/'){
             for $form in ('inet:cidr4', 'inet:cidr6'){
                 [ *$form?=$ioc +#warninglist.$name ]
+                if $node { break }
             }
         }
         else {
             for $form in ('inet:ipv4', 'inet:ipv6'){
                 [ *$form?=$ioc +#warninglist.$name ]
+                if $node { break }
             }
         }
     }
