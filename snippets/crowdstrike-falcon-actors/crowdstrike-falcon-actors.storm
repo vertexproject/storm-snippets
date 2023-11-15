@@ -1,8 +1,8 @@
 /*
 Name: crowdstrike-falcon-actors.storm
-Original Author: bartosz.roszewski@smartcontract.com
-Modified By: <>
-Date: 2023-10-09
+Author: bartosz.roszewski@smartcontract.com
+Modified By: reign@vertex.link, cisphyx@vertex.link
+Last Modified: 2023-11-15
 
 Description: Ingest data returned from Crowdstrike's Falcon Intelligence Actor APIs. A Crowdstrike Power-Up did not exist at the time of this release.
 
@@ -11,16 +11,15 @@ References:
     -- Docs: https://developer.crowdstrike.com/crowdstrike/docs
 
 Dependencies:
-    -- Crowdstrike API key
+    -- Crowdstrike API key.
+    -- No nodes should be inbound when calling this snippet due to the use of for loops.
 */
 
 // Iterate over each yielded result.
 for $actor in $rows {
-    $aliases = $lib.list()
     $aliases = $actor.known_as.split(",")
     
     // CS naming convention is perfect for a proper tag hierarchy with all SPIDERs being part of a larger SPIDER tag tree. 
-    $actor_name = $lib.list()
     $actor_name = $actor.slug.split("-")
     $tag = $lib.str.format("rep.crowdstrike.thr.{cat}.{name}", cat=$actor_name.1, name=$actor_name.0)
     
@@ -73,6 +72,7 @@ for $actor in $rows {
                 $target_industries.append($lookup)
             } else {
                 {[ou:industry=("crowdstrike", $industry.slug) :name=$industry_name]}
+                $target_industries.append($lookup)
             }
         }
     }

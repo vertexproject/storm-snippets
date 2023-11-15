@@ -1,8 +1,8 @@
 /*
 Name: hunt_rules_prose.storm
-Inspired by: secman@secman.pl (who was inspired by thesilence@vertex.link :))
-Modified by: reign@vertex.link
-Date: 2023-10-09
+Author: secman@secman.pl
+Modified By: reign@vertex.link, cisphyx@vertex.link
+Last Modified: 2023-11-15
 
 Description: Generate the hunting coverage section of a threat group profile.  
 
@@ -50,6 +50,4 @@ yaracnt=$yara_rules.size(),
 searchcnt=$search_queries.size(),
 ).strip()
 
-fini {
-    return($prose)
-}
+return($prose)

@@ -1,10 +1,10 @@
 /*
 Name: kc7-http-request-to-login.storm
-Original Author: charlesprice@microsoft.com
-Modified By: 
-Date: 2023-10-09
+Author: charlesprice@microsoft.com
+Modified By: reign@vertex.link, cisphyx@vertex.link
+Last Modified: 2023-11-15
 
-Description: Identifies the user (and their associated contact information) that successfully logged on from an external IPv4 address at the time/after an HTTP request was made to a domain of interest.
+Description: Identifies the KC7 cyber challenge user (and their associated contact information) that successfully logged on from an external IPv4 address at the time/after an HTTP request was made to a domain of interest.
 
 References: 
     -- https://kc7cyber.com/

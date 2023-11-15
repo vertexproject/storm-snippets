@@ -1,8 +1,8 @@
 /*
 Name: misp-warninglists.storm
-Inspired by: cybermail2822@gmail.com
-Modified by: reign@vertex.link
-Date: 2023-10-09
+Author: cybermail2822@gmail.com
+Modified By: reign@vertex.link, cisphyx@vertex.link
+Last Modified: 2023-11-15
 
 Description: Ingests and tags MISP warninglists data. At the time of release this snippet creates ~1.4M nodes.
 

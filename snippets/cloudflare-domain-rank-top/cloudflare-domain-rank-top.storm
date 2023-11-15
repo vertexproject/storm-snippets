@@ -1,8 +1,8 @@
 /*
 Name: cloudflare-domain-rank-top.storm
-Original Author: bartosz.roszewski@smartcontract.com
-Modified By: reign@vertex.link
-Date: 2023-10-09
+Author: bartosz.roszewski@smartcontract.com
+Modified By: reign@vertex.link, cisphyx@vertex.link
+Last Modified: 2023-11-15
 
 Description: Query Cloudflare's Radar Rankings datasets to get the top global Internet domains. Recommend trying this out with up to top_10000 dataset before running the entire top_1000000.
 

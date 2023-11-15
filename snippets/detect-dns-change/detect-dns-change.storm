@@ -1,8 +1,8 @@
 /*
 Name: detect-dns-change.storm
-Original Author: chris.cronbaugh@coinbase.com
-Modified By: reign@vertex.link
-Date: 2023-10-09
+Author: chris.cronbaugh@coinbase.com
+Modified By: reign@vertex.link, cisphyx@vertex.link
+Last Modified: 2023-11-15
 
 Description: Detects anomalous DNS activity for a set of domains by identifying domains that currently resolve to an IPv4 address in a different Autonomous System Number (ASN), than the IPv4 address did 24 hours prior.
 
