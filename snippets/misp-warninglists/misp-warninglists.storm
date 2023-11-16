@@ -1,0 +1,98 @@
+/*
+Name: misp-warninglists.storm
+Author: cybermail2822@gmail.com
+Modified By: reign@vertex.link, cisphyx@vertex.link
+Last Modified: 2023-11-15
+
+Description: Ingests and tags MISP warninglists data. At the time of release this snippet creates ~1.4M nodes.
+
+References: 
+    -- https://github.com/MISP/misp-warninglists
+*/
+
+// Create and tag CIDR indicators. 
+function createNodes(content, name){
+    for $ioc in $content.list{
+        if ($ioc ~= '/'){
+            for $form in ('inet:cidr4', 'inet:cidr6'){
+                [ *$form?=$ioc +#warninglist.$name ]
+                if $node { break }
+            }
+        }
+        else {
+            for $form in ('inet:ipv4', 'inet:ipv6'){
+                [ *$form?=$ioc +#warninglist.$name ]
+                if $node { break }
+            }
+        }
+    }
+}
+
+// Set MISP source warning list URLs
+$url_all = "https://api.github.com/repos/MISP/misp-warninglists/contents/lists"
+$url_base = "https://raw.githubusercontent.com/MISP/misp-warninglists/main/lists/"
+
+
+// Get MISP warning list names.
+$resp = $lib.inet.http.get($url_all)
+
+// Check for an unsuccessful HTTP response code
+if ($resp.code != 200) {
+    $lib.warn(`Returned HTTP code: {$resp.code} {$resp.reason}`)
+    return($lib.null)
+}
+
+// Get warning list contents.
+else{
+
+    // Generate URLs for each warning list, and GET the URL's contents.
+    $lists = $resp.json()
+    for $warninglist in $lists{
+        $url = $lib.str.concat($url_base, $warninglist.name, '/list.json')
+        $resp = $lib.inet.http.get($url)
+        $lib.print($url)
+
+        // Check for an unsuccessful HTTP response code.
+        if ($resp.code != 200) {
+            $lib.warn(`Returned HTTP code: {$resp.code} {$resp.reason}`)
+            return($lib.null)
+        }
+
+        // Create nodes for warning list indicators.
+        else{
+            $content = $resp.json()
+            $type = $content.type
+            $forms = ()
+            $name = $lib.regex.replace('\.', '_', $warninglist.name)
+
+            switch $type {
+                'cidr':{ // $lib.scrape will always make inet:ipv4 nodes
+                         // e.g.: 192.168.0.0/24 will result in:
+                         // inet:ipv4 = 192.168.0.0 instead of
+                         // inet:cidr4 = 192.168.0.0/24
+                    $createNodes($content, $name)
+                }
+                *:{
+                    // Scrape and tag hostname indicators prepended with a "."
+                    for $ioc in $content.list{
+                        if ($content.type = "hostname"){ // Some hostnames start with a '.'
+                                                         // and are therefore not parsed out
+                                                         // by $lib.scrape
+                            if $lib.regex.matches("^(\.[a-z]+)+$", $ioc){
+                                $ioc = $ioc.lstrip('.')
+                                for ($form, $valu) in $lib.scrape.ndefs($ioc){
+                                    [ ( *$form ?= $valu ) +#warninglist.$name ] | spin
+                                }
+                            }
+                        }
+                    }
+
+                    // Scrape and tag all other indicators.
+                    for ($form, $valu) in $lib.scrape.ndefs($content.list) {
+                        [ ( *$form ?= $valu ) +#warninglist.$name ] | spin
+                    }
+                }
+            }
+        }
+    }
+}

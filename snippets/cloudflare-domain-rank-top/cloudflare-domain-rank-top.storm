@@ -1,0 +1,53 @@
+/*
+Name: cloudflare-domain-rank-top.storm
+Author: bartosz.roszewski@smartcontract.com
+Modified By: reign@vertex.link, cisphyx@vertex.link
+Last Modified: 2023-11-15
+
+Description: Query Cloudflare's Radar Rankings datasets to get the top global Internet domains. Recommend trying this out with up to top_10000 dataset before running the entire top_1000000.
+
+References: 
+    -- Obtaining a developer key: https://developers.cloudflare.com/radar/get-started/first-request/
+    -- API: https://developers.cloudflare.com/api/operations/radar-get-reports-datasets
+
+Dependencies:
+    -- You must set a global key named 'cloudflare:apikey' to your Cloudflare API key.
+*/
+
+
+// List of top datasets to query.
+$datasets = (["top_200", "top_500", "top_1000", "top_2000", "top_5000", "top_10000", "top_20000", "top_50000", "top_100000", "top_200000", "top_500000", "top_1000000"])
+
+// Query Cloudflare Radar for each top dataset. 
+for $dataset in $datasets {
+    $url = `https://api.cloudflare.com/client/v4/radar/datasets/ranking_{$dataset}`
+    $headers = ({
+        "Accept": "application/json",
+        "Authorization": `Bearer {$lib.globals.get(cloudflare:apikey)}` //added Bearer
+    })
+    
+    $resp = $lib.inet.http.get($url, $headers)
+    
+    // For each successful response ...
+    if ($resp.code = 200) {
+             
+        $body = $resp.body
+        $body = $lib.inet.http.urldecode($body)
+        $body = $body.split("\n")
+
+        $tag = $lib.regex.replace("top_", "", $dataset)
+        $time = $lib.time.now()
+    
+        // Create an FQDN node for each yielded domain, and apply a top tag.
+        for $domain in $body {
+            if ($domain~="\w") {
+                [ inet:fqdn?=$domain +#rep.cloudflare.top.$tag=$time ]
+            }
+        }
+    } 
+    
+    // Print HTTP warning messages to the console.
+    else {   
+        $lib.warn(`Download for dataset "{$dataset}" returned HTTP code: {$resp.code} {$resp.reason}`)
+    }
+}

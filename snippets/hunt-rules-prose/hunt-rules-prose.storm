@@ -1,0 +1,53 @@
+/*
+Name: hunt_rules_prose.storm
+Author: secman@secman.pl
+Modified By: reign@vertex.link, cisphyx@vertex.link
+Last Modified: 2023-11-15
+
+Description: Generate the hunting coverage section of a threat group profile.  
+
+Dependencies:
+    -- This macro must be executed in the Stories Tool.
+*/
+
+// Filter for inbound ou:org nodes.
++ou:org
+
+// Initialize variables.
+init {
+    $yara_rules=$lib.set()
+    $search_queries=$lib.set()
+    $prose='' 
+}
+
+// Get tags associated with the inbound threat group.
+:names -> risk:threat:name :tag -> syn:tag
+
+// Lift the Yara rules tagged with the threat group's tag, and add them to a list.
+{
+    -> it:app:yara:rule | uniq |
+    $yara_rules.add($node.value())
+}
+
+// Lift the hunting search queries tagged with the threat group's tag, and add them to a list.
+{
+    -> inet:search:query | uniq |
+    $search_queries.add($node.value())
+}
+   
+// Remove the syn:tag nodes from the pipeline.
+-syn:tag  
+
+// Generate and return the formatted threat hunting coverage prose.
+$prose=$lib.str.format('
+---------------------------
+Number of Rules & Searches
+---------------------------
+YARA Rules: {yaracnt}
+Searches: {searchcnt}
+',
+yaracnt=$yara_rules.size(),
+searchcnt=$search_queries.size(),
+).strip()
+
+return($prose)

@@ -1,0 +1,48 @@
+/*
+Name: detect-dns-change.storm
+Author: chris.cronbaugh@coinbase.com
+Modified By: reign@vertex.link, cisphyx@vertex.link
+Last Modified: 2023-11-15
+
+Description: Detects anomalous DNS activity for a set of domains by identifying domains that currently resolve to an IPv4 address in a different Autonomous System Number (ASN), than the IPv4 address did 24 hours prior.
+
+Dependencies:
+    -- maxmind and nettools 
+*/
+
+// Filter for inbound FQDN nodes.
++inet:fqdn
+
+// Lift the domain's DNS A records seen within the last 24 hours, and remove records seen between 1-2 days ago.
+-> inet:dns:a
+    +.seen@=(-1day,now)    
+    -.seen@=(-2days,-1day)  
+
+// Enrich IPv4 addresses with maxmind and nettools to obtain their ASN.
+{ 
+    -> inet:ipv4
+    | parallel { maxmind }   
+    | -:asn   
+    | parallel { nettools.whois }  
+}
+
+// Filter for DNS A records observed within the last 24 hours whose IPv4 address is in a different ASN from IPv4 address that the domain resolved to 24-48 hours prior. 
++{
+    // Get the current IPv4 address's ASN
+    +{ 
+        -> inet:ipv4 +:asn $asn=:asn
+    }
+    
+    // Lift all DNS A record for the domain that were observed between 1-2 days ago, and enrich their associated IPv4 addresses to obtain their ASN.
+    :fqdn -> inet:dns:a:fqdn   
+    +.seen@=(-2day,-1day) 
+    -> inet:ipv4 { 
+        | parallel { maxmind } 
+        | -:asn 
+        | parallel { nettools.whois } 
+    }
+
+    // Filter out IPv4 addresses without an ASN, and within the same ASN as the current node.
+    +:asn 
+    -:asn=$asn 
+}

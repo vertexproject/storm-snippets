@@ -1,0 +1,60 @@
+/*
+Name: cloudflare-domain-rank.storm
+Author: bartosz.roszewski@smartcontract.com
+Modified By: reign@vertex.link, cisphyx@vertex.link
+Last Modified: 2023-11-15
+
+Description: Query Cloudflare's Radar Rankings dataset to obtain the domain rank details for an FQDN. 
+
+References: 
+    -- Obtaining a developer key: https://developers.cloudflare.com/radar/get-started/first-request/
+    -- API: https://developers.cloudflare.com/api/operations/radar-get-ranking-domain-details
+
+Dependencies:
+    -- You must set a global key named 'cloudflare:apikey' to your Cloudflare API key.
+*/
+
+// Filter for inbound FQDN nodes
++inet:fqdn
+
+// Query Cloudflare's Radar's Domains Rank details for the inbound domain.
+$url = `https://api.cloudflare.com/client/v4/radar/ranking/domain/{$node.repr()}`
+$headers = ({
+    "Accept": "application/json",
+    "Authorization": `Bearer {$lib.globals.get(cloudflare:apikey)}` 
+})
+$resp = $lib.inet.http.get($url, $headers)
+
+// For each successful response ...
+if ($resp.code = 200) {  
+    $body = $resp.json()   
+    $time = $lib.time.now()
+    {
+        // Get the domain's categories, and apply category tags to the inbound domain.
+        if ($body.result.details_0.categories != $lib.null) {
+            for $category in $body.result.details_0.categories {
+                $tag = $category.name
+                [+#rep.cloudflare.cat.$tag=$time]
+            }
+        }
+    }
+    
+    {
+        // Get the domain's top locations, and apply location tags to the inbound domain.
+        if ($body.result.details_0.top_locations != $lib.null) {
+            for $country in $body.result.details_0.top_locations {
+                $tag = $country.locationName
+                [+#rep.cloudflare.top_location.$tag=$time]
+            }
+        }
+    }
+
+    // Get the domain's top bucket numbers, and apply top tags (<200000) to the inbound domain.
+    $tag = $body.result.details_0.bucket
+    if ($tag != ">200000") { [+#rep.cloudflare.top.$tag=$time] }
+}
+
+// Print HTTP warning messages to the console.
+else {
+    $lib.warn(`Query returned HTTP code: {$resp.code} {$resp.reason}`)
+}
